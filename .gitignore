@@ -1,0 +1,107 @@
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# .NET build outputs
+bin/
+obj/
+artifacts/
+# Keep the .gitkeep file in bin and obj to preserve directory structure
+bin/.gitkeep
+obj/.gitkeep
+
+# NuGet packages
+*.nupkg
+*.snupkg
+
+# Visual Studio and Visual Studio Code
+.vs/
+.vscode/
+*.swp
+*.swo
+*.swn
+.DS_Store
+Thumbs.db
+
+# Rider IDE
+.idea/
+*.sln.iml
+
+# User-specific files (Mono)
+*.user
+*.userprefs
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Rider IDE
+.idea/
+*.sln.iml
+
+# Rider plugin
+.idea_modules/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# Compiled binary addons (https://nodejs.org/api/addons.html)
+build/Release
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
