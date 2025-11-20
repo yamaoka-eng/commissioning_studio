@@ -1,4 +1,5 @@
 using commissioning_studio.Components;
+using AntDesign;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,7 +7,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// зЂВс Ant Design Blazor ЗўЮё
+builder.Services.AddAntDesign();
+
 var app = builder.Build();
+
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
