@@ -1,13 +1,13 @@
 ﻿@page "/"
-@using Ecal
+@using CommissioningStudio.Ecal
 @inject IJSRuntime JSRuntime
 <PageTitle>eCAL 服务调用测试</PageTitle>
 
 <h1>eCAL 类似 WebAPI 调用</h1>
 
-<!-- 按钮：点击调用 /test 接口 -->
+<!-- 按钮：点击调用 Temperature_humidity/get_temperature_humidity 接口 -->
 <button class="btn btn-primary m-2" @onclick="CallTestService" disabled="@_isCalling">
-    @(_isCalling ? "调用中..." : "调用 /test 接口（返回 true）")
+    @(_isCalling ? "调用中..." : "调用 Temperature_humidity/get_temperature_humidity 接口")
 </button>
 
 <!-- 显示结果 -->
@@ -17,47 +17,69 @@
 
 @code {
     private bool _isCalling;           // 防止重复点击
-    private bool? _result;             // 调用结果（true/false）
+    private bool? _result;             // 调用结果（true=成功, false=失败, null=未调用）
     private string _statusMessage = "请点击按钮调用接口";
 
-    // 页面初始化：验证服务端和客户端是否注入成功
-    protected override void OnInitialized()
+    // 小 DTO，匹配服务端返回的 { temperature, humidity }
+    public class TemperatureHumidityDto
     {
-        if (Service == null || Client == null)
-        {
-            _statusMessage = "服务端/客户端注入失败！";
-            return;
-        }
-        _statusMessage = "服务端已启动（DI 注入），可调用接口";
+        public double temperature { get; set; }
+        public double humidity { get; set; }
     }
 
-    // 按钮点击事件：调用 /test 接口（直接用注入的 Client）
+    // 点击事件：调用 Temperature_humidity/get_temperature_humidity 并更新 UI
     private async Task CallTestService()
     {
-        if (Client == null || _isCalling) return;
+        if (_isCalling) return;
 
         _isCalling = true;
         _statusMessage = "正在调用接口...";
         _result = null;
+        StateHasChanged();
 
         try
         {
-            // 直接调用注入的客户端方法（无需手动 new，DI 已初始化）
-            bool result = await Client.CallTestServiceAsync();
+            // EcalAnnotationHelper.CallApi 是同步封装的调用（会返回 ApiResponse<T>），
+            // 在 UI 线程外执行以避免阻塞
+            var resp = await Task.Run(() =>
+                EcalAnnotationHelper.CallApi<ApiResponse<TemperatureHumidityDto>>(
+                    "Temperature_humidity/get_temperature_humidity",
+                    null, // 无参数
+                    5.0   // 超时时间（秒）
+                )
+            );
 
-            // 显示结果
-            _result = result;
-            _statusMessage = result ? "接口调用成功！返回结果：True" : "接口调用失败！返回结果：False";
-            await JSRuntime.InvokeVoidAsync("alert", _statusMessage);
+            if (resp != null && resp.state)
+            {
+                var dto = resp.data;
+                if (dto != null)
+                {
+                    _statusMessage = $"温度: {dto.temperature}, 湿度: {dto.humidity}";
+                    _result = true;
+                }
+                else
+                {
+                    _statusMessage = "调用成功，但返回 data 为空";
+                    _result = false;
+                }
+            }
+            else
+            {
+                _statusMessage = resp != null ? (resp.error_msg ?? "调用失败，未提供错误信息") : "响应解析失败";
+                _result = false;
+            }
         }
         catch (Exception ex)
         {
-            _statusMessage = $"调用失败：{ex.Message}";
-            await JSRuntime.InvokeVoidAsync("alert", _statusMessage);
+            _statusMessage = $"调用异常：{ex.Message}";
+            _result = false;
         }
         finally
         {
             _isCalling = false;
+            // 可选：弹窗提示
+            await JSRuntime.InvokeVoidAsync("alert", _statusMessage);
+            StateHasChanged();
         }
     }
 }
