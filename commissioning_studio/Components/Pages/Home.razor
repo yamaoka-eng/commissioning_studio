@@ -1,7 +1,63 @@
 ﻿@page "/"
+@using Ecal
+@inject IJSRuntime JSRuntime
+<PageTitle>eCAL 服务调用测试</PageTitle>
 
-<PageTitle>Home</PageTitle>
+<h1>eCAL 类似 WebAPI 调用</h1>
 
-<h1>Hello, world!</h1>
+<!-- 按钮：点击调用 /test 接口 -->
+<button class="btn btn-primary m-2" @onclick="CallTestService" disabled="@_isCalling">
+    @(_isCalling ? "调用中..." : "调用 /test 接口（返回 true）")
+</button>
 
-Welcome to your new app.
+<!-- 显示结果 -->
+<div class="alert mt-3 @(_result.HasValue ? (_result.Value ? "alert-success" : "alert-danger") : "alert-info")">
+    @_statusMessage
+</div>
+
+@code {
+    private bool _isCalling;           // 防止重复点击
+    private bool? _result;             // 调用结果（true/false）
+    private string _statusMessage = "请点击按钮调用接口";
+
+    // 页面初始化：验证服务端和客户端是否注入成功
+    protected override void OnInitialized()
+    {
+        if (Service == null || Client == null)
+        {
+            _statusMessage = "服务端/客户端注入失败！";
+            return;
+        }
+        _statusMessage = "服务端已启动（DI 注入），可调用接口";
+    }
+
+    // 按钮点击事件：调用 /test 接口（直接用注入的 Client）
+    private async Task CallTestService()
+    {
+        if (Client == null || _isCalling) return;
+
+        _isCalling = true;
+        _statusMessage = "正在调用接口...";
+        _result = null;
+
+        try
+        {
+            // 直接调用注入的客户端方法（无需手动 new，DI 已初始化）
+            bool result = await Client.CallTestServiceAsync();
+
+            // 显示结果
+            _result = result;
+            _statusMessage = result ? "接口调用成功！返回结果：True" : "接口调用失败！返回结果：False";
+            await JSRuntime.InvokeVoidAsync("alert", _statusMessage);
+        }
+        catch (Exception ex)
+        {
+            _statusMessage = $"调用失败：{ex.Message}";
+            await JSRuntime.InvokeVoidAsync("alert", _statusMessage);
+        }
+        finally
+        {
+            _isCalling = false;
+        }
+    }
+}
