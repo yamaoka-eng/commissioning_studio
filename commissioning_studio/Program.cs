@@ -1,6 +1,6 @@
 using AntDesign;
 using commissioning_studio.Components;
-using CommissioningStudio.Ecal;
+using commissioning_studio.Ecal;
 
 var builder = WebApplication.CreateBuilder(args);
 

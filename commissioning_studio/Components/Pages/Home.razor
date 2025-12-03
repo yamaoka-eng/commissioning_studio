@@ -1,5 +1,6 @@
 ﻿@page "/"
-@using CommissioningStudio.Ecal
+@using commissioning_studio.Ecal
+@using static commissioning_studio.Modules.Temperature_humidity
 @inject IJSRuntime JSRuntime
 <PageTitle>eCAL 服务调用测试</PageTitle>
 
@@ -20,12 +21,6 @@
     private bool? _result;             // 调用结果（true=成功, false=失败, null=未调用）
     private string _statusMessage = "请点击按钮调用接口";
 
-    // 小 DTO，匹配服务端返回的 { temperature, humidity }
-    public class TemperatureHumidityDto
-    {
-        public double temperature { get; set; }
-        public double humidity { get; set; }
-    }
 
     // 点击事件：调用 Temperature_humidity/get_temperature_humidity 并更新 UI
     private async Task CallTestService()
@@ -36,19 +31,17 @@
         _statusMessage = "正在调用接口...";
         _result = null;
         StateHasChanged();
-
         try
         {
             // EcalAnnotationHelper.CallApi 是同步封装的调用（会返回 ApiResponse<T>），
             // 在 UI 线程外执行以避免阻塞
             var resp = await Task.Run(() =>
-                EcalAnnotationHelper.CallApi<ApiResponse<TemperatureHumidityDto>>(
+                EcalAnnotationHelper.CallApi<TemperatureHumidityDto>(
                     "Temperature_humidity/get_temperature_humidity",
                     null, // 无参数
                     5.0   // 超时时间（秒）
                 )
             );
-
             if (resp != null && resp.state)
             {
                 var dto = resp.data;

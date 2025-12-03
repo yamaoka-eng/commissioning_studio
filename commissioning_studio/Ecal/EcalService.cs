@@ -1,14 +1,11 @@
-﻿using commissioning_studio.Ecal;
-using Eclipse.eCAL.Core;
+﻿using Eclipse.eCAL.Core;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace CommissioningStudio.Ecal
+namespace commissioning_studio.Ecal
 {
     /// <summary>
     /// 标记方法为 Modular OP（类似 Python 的 @MODULAR.op.motion）。
@@ -250,6 +247,16 @@ namespace CommissioningStudio.Ecal
                 else
                 {
                     resultObj = returnObj;
+                }
+
+                // 重要：如果被调用方法已经返回 EcalResponse<...>，直接返回该响应，避免二次包装导致客户端解析到 null
+                if (resultObj != null)
+                {
+                    var rType = resultObj.GetType();
+                    if (rType.IsGenericType && rType.GetGenericTypeDefinition() == typeof(EcalResponse<>))
+                    {
+                        return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(resultObj));
+                    }
                 }
 
                 var success = new EcalResponse<object> { state = true, data = resultObj };
