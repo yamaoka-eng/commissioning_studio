@@ -2,6 +2,8 @@
 @using commissioning_studio.Ecal
 @using static commissioning_studio.Modules.Temperature_humidity
 @inject IJSRuntime JSRuntime
+@using System.Diagnostics
+
 <PageTitle>eCAL 服务调用测试</PageTitle>
 
 <h1>eCAL 类似 WebAPI 调用</h1>
@@ -35,13 +37,24 @@
         {
             // EcalAnnotationHelper.CallApi 是同步封装的调用（会返回 ApiResponse<T>），
             // 在 UI 线程外执行以避免阻塞
+            
+            var sw = Stopwatch.StartNew();
+            Console.WriteLine($"【开始】{DateTime.Now:HH:mm:ss.fff}");
+
             var resp = await Task.Run(() =>
                 EcalAnnotationHelper.CallApi<TemperatureHumidityDto>(
                     "Temperature_humidity/get_temperature_humidity",
-                    null, // 无参数
-                    5.0   // 超时时间（秒）
+                    new { type = "a" },
+                    5.0
                 )
             );
+
+            sw.Stop();
+
+            // 调用后时间
+            Console.WriteLine($"【结束】{DateTime.Now:HH:mm:ss.fff}");
+            Console.WriteLine($"【耗时】{sw.Elapsed.TotalMilliseconds:F0} ms");
+
             if (resp != null && resp.state)
             {
                 var dto = resp.data;

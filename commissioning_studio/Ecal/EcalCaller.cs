@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Concurrent;
 using System.Text;
-using System.Threading;
 using Newtonsoft.Json;
 using Eclipse.eCAL.Core;
 
@@ -69,8 +65,7 @@ namespace commissioning_studio.Ecal
                     if (responses.Count > 0 && responses[0].CallState == CallState.Executed)
                     {
                         var raw = Encoding.UTF8.GetString(responses[0].Response);
-                        // 回退：兼容服务端返回的伪格式（例如 {state=true,error_msg=null,data=null}）
-                        return NormalizePseudoObject(raw);
+                        return raw;
                     }
                     else
                     {
@@ -82,53 +77,6 @@ namespace commissioning_studio.Ecal
             catch (Exception ex)
             {
                 return JsonConvert.SerializeObject(new { state = false, error_msg = $"调用异常：{ex.Message}" });
-            }
-        }
-
-        /// <summary>
-        /// 简单把伪格式对象字符串转换为合法 JSON，作为容错回退（尽量不要长期依赖）
-        /// 支持样例输入： "{state=true,error_msg=null,data=null}"
-        /// 输出： "{\"state\":true,\"error_msg\":null,\"data\":null}"
-        /// </summary>
-        private string NormalizePseudoObject(string s)
-        {
-            if (string.IsNullOrWhiteSpace(s)) return s;
-            var t = s.Trim();
-            // 不是大括号或不含等号则认为已为合法 JSON
-            if (!t.StartsWith("{") || !t.EndsWith("}") || !t.Contains("=")) return s;
-
-            try
-            {
-                var inner = t.Substring(1, t.Length - 2);
-                var parts = inner.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                                 .Select(p => p.Trim());
-                var kvs = new List<string>();
-                foreach (var p in parts)
-                {
-                    var idx = p.IndexOf('=');
-                    if (idx < 0) continue;
-                    var key = p.Substring(0, idx).Trim();
-                    var val = p.Substring(idx + 1).Trim();
-
-                    var lower = val.ToLowerInvariant();
-                    // 如果是布尔或 null 或已经是对象/数组/字符串，则直接使用
-                    if (lower == "true" || lower == "false" || lower == "null" || val.StartsWith("{") || val.StartsWith("[") || val.StartsWith("\""))
-                    {
-                        kvs.Add($"\"{key}\":{val}");
-                    }
-                    else
-                    {
-                        // 把未加引号的字符串值加上双引号并转义
-                        var escaped = JsonConvert.ToString(val);
-                        kvs.Add($"\"{key}\":{escaped}");
-                    }
-                }
-
-                return "{" + string.Join(",", kvs) + "}";
-            }
-            catch
-            {
-                return s;
             }
         }
 

@@ -229,38 +229,13 @@ namespace commissioning_studio.Ecal
                 // 调用目标方法并统一包装响应
                 object? resultObj = null;
                 var returnObj = method.Invoke(instance, invokeArgs);
-
                 if (returnObj is Task task)
                 {
                     task.GetAwaiter().GetResult();
-                    var taskType = task.GetType();
-                    if (taskType.IsGenericType && taskType.GetGenericTypeDefinition() == typeof(Task<>))
-                    {
-                        var resultProperty = taskType.GetProperty("Result");
-                        resultObj = resultProperty?.GetValue(task);
-                    }
-                    else
-                    {
-                        resultObj = null;
-                    }
+                    resultObj = task.GetType().GetProperty("Result").GetValue(task);
                 }
-                else
-                {
-                    resultObj = returnObj;
-                }
-
-                // 重要：如果被调用方法已经返回 EcalResponse<...>，直接返回该响应，避免二次包装导致客户端解析到 null
-                if (resultObj != null)
-                {
-                    var rType = resultObj.GetType();
-                    if (rType.IsGenericType && rType.GetGenericTypeDefinition() == typeof(EcalResponse<>))
-                    {
-                        return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(resultObj));
-                    }
-                }
-
-                var success = new EcalResponse<object> { state = true, data = resultObj };
-                return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(success));
+                
+                return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(resultObj));
             }
             catch (TargetInvocationException tie)
             {

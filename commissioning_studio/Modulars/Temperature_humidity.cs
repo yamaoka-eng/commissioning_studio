@@ -12,13 +12,24 @@ public class Temperature_humidity
     }
 
     [ModularOp]
-    public async Task<object> get_temperature_humidity()
+    public async Task<object> get_temperature_humidity(string type)
     {
-        await Task.Delay(10);
-        return new EcalResponse<TemperatureHumidityDto>
+        if (type == "a")
         {
-            state = false,
-            data = new TemperatureHumidityDto { temperature = 23.5, humidity = 45.2 }
-        };
+            return new EcalResponse<TemperatureHumidityDto>
+            {
+                state = true,
+                data = new TemperatureHumidityDto { temperature = 23.5, humidity = 45.2 }
+            };
+        }
+        else
+        {
+            return new EcalResponse<TemperatureHumidityDto>
+            {
+                state = true,
+                data = new TemperatureHumidityDto { temperature = 100, humidity = 100 }
+            };
+        }
+        
     }
 }
