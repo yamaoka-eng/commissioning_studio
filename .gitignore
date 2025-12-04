@@ -6,13 +6,18 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# .NET build outputs
-bin/
-obj/
-artifacts/
-# Keep the .gitkeep file in bin and obj to preserve directory structure
-bin/.gitkeep
-obj/.gitkeep
+# 关键：不忽略 bin 文件夹本身，而是忽略 bin 内的所有文件/子文件夹
+**/bin/**/*
+**/obj/
+
+# 但保留特定的 DLL 文件（注意：需要放在忽略规则之后，并且使用 ! 否定）
+!**/bin/**/Eclipse.eCAL.Core.dll
+!**/bin/**/ecal_core.dll
+!**/bin/**/
+
+# Keep the .gitkeep files in bin and obj directories
+!**/bin/**/.gitkeep
+!**/obj/**/.gitkeep
 
 # NuGet packages
 *.nupkg
