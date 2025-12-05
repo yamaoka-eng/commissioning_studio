@@ -9,41 +9,41 @@
 <h1>eCAL 类似 WebAPI 调用</h1>
 
 <!-- 按钮：点击调用 Temperature_humidity/get_temperature_humidity 接口 -->
-<button class="btn btn-primary m-2" @onclick="CallTestService" disabled="@_isCalling">
+<button class="btn btn-primary m-2" @onclick=@(e => CallTestService("get_temperature_humidity")) disabled="@_isCalling">
     @(_isCalling ? "调用中..." : "调用 Temperature_humidity/get_temperature_humidity 接口")
 </button>
 
+<button class="btn btn-primary m-2" @onclick=@(e => CallTestService("get_test")) disabled="@_isCalling">
+    @(_isCalling ? "调用中..." : "调用 Temperature_humidity/get_test 接口")
+</button>
+
 <!-- 显示结果 -->
-<div class="alert mt-3 @(_result.HasValue ? (_result.Value ? "alert-success" : "alert-danger") : "alert-info")">
+<div class="alert mt-3">
     @_statusMessage
 </div>
 
 @code {
     private bool _isCalling;           // 防止重复点击
-    private bool? _result;             // 调用结果（true=成功, false=失败, null=未调用）
     private string _statusMessage = "请点击按钮调用接口";
 
 
     // 点击事件：调用 Temperature_humidity/get_temperature_humidity 并更新 UI
-    private async Task CallTestService()
+    private async Task CallTestService(string src)
     {
-        if (_isCalling) return;
-
         _isCalling = true;
         _statusMessage = "正在调用接口...";
-        _result = null;
         StateHasChanged();
         try
         {
             // EcalAnnotationHelper.CallApi 是同步封装的调用（会返回 ApiResponse<T>），
             // 在 UI 线程外执行以避免阻塞
-            
+
             var sw = Stopwatch.StartNew();
             Console.WriteLine($"【开始】{DateTime.Now:HH:mm:ss.fff}");
 
             var resp = await Task.Run(() =>
                 EcalAnnotationHelper.CallApi<TemperatureHumidityDto>(
-                    "Temperature_humidity/get_temperature_humidity",
+                    $"Temperature_humidity/{src}",
                     new { type = "a" },
                     5.0
                 )
@@ -61,31 +61,21 @@
                 if (dto != null)
                 {
                     _statusMessage = $"温度: {dto.temperature}, 湿度: {dto.humidity}";
-                    _result = true;
                 }
                 else
                 {
                     _statusMessage = "调用成功，但返回 data 为空";
-                    _result = false;
                 }
             }
             else
             {
                 _statusMessage = resp != null ? (resp.error_msg ?? "调用失败，未提供错误信息") : "响应解析失败";
-                _result = false;
             }
         }
         catch (Exception ex)
         {
             _statusMessage = $"调用异常：{ex.Message}";
-            _result = false;
         }
-        finally
-        {
-            _isCalling = false;
-            // 可选：弹窗提示
-            await JSRuntime.InvokeVoidAsync("alert", _statusMessage);
-            StateHasChanged();
-        }
+        _isCalling = false;
     }
 }

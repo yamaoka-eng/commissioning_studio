@@ -40,9 +40,9 @@ namespace commissioning_studio.Ecal
         bool _initialized = false;
         readonly object _lock = new();
 
-        public EcalService(string serviceName = "modular")
+        public EcalService(string serviceName = "modulars")
         {
-            _serviceName = serviceName ?? "modular";
+            _serviceName = serviceName ?? "modulars";
         }
 
         /// <summary>

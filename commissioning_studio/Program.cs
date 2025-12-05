@@ -18,8 +18,11 @@ var app = builder.Build();
 
 // 启动 eCAL 服务（在 app.Build() 后，app.Run() 前执行一次）
 var ecal = app.Services.GetRequiredService<EcalService>();
+
 // 尝试启动；若抛异常请在日志中查看原因（例如 eCAL 本地库缺失）
 ecal.Start();
+commissioning_studio.Ecal.EcalCaller.InitEcalOnce();
+commissioning_studio.Ecal.EcalCaller.GetOrCreateClient("modulars");
 
 // 在应用停止时优雅停止 eCAL 服务
 app.Lifetime.ApplicationStopping.Register(() =>

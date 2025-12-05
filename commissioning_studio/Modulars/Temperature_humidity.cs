@@ -32,4 +32,14 @@ public class Temperature_humidity
         }
         
     }
+
+    [ModularOp]
+    public async Task<object> get_test()
+    {
+        return new EcalResponse<TemperatureHumidityDto>
+        {
+            state = true,
+            data = new TemperatureHumidityDto { temperature = 2, humidity = 1 }
+        };
+    }
 }

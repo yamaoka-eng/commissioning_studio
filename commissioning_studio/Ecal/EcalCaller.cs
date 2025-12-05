@@ -1,51 +1,49 @@
-﻿using System.Collections.Concurrent;
-using System.Text;
+﻿using Eclipse.eCAL.Core;
 using Newtonsoft.Json;
-using Eclipse.eCAL.Core;
+using System.Collections.Concurrent;
+using System.Reflection;
+using System.Text;
 
 namespace commissioning_studio.Ecal
 {
     /// <summary>
-    /// 复刻 Python RheaCaller 逻辑（基于 eCAL 官方 C# API）
-    /// 特性：全局初始化、客户端缓存、线程安全、一行调用
+    /// ecal接口调用，特性：全局初始化、客户端缓存、线程安全、一行调用
     /// </summary>
     public class EcalCaller
     {
-        // 对应 Python 的 global ECAL_INITED（全局 eCAL 初始化标记）
+        // 全局 eCAL 初始化标记
         private static bool _ecalInited;
-        // 对应 Python 的 global CLIENT_CACHE（客户端缓存：key=服务名，value=(客户端, 线程锁)）
+        // 客户端缓存：key=服务名，value=(客户端, 线程锁)
         private static readonly ConcurrentDictionary<string, (ServiceClient Client, ReaderWriterLockSlim Lock)> _clientCache = new();
         // 初始化锁（确保 eCAL 只初始化一次）
         private static readonly object _initLock = new();
 
         /// <summary>
-        /// 调用 eCAL 服务接口（对应 Python 的 __call__ 方法）
+        /// 调用 eCAL 服务接口
         /// </summary>
-        /// <param name="pathtmStr">服务名/接口名（格式："服务名/接口名"，如 "TestService/test"）</param>
+        /// <param name="pathtmStr">服务名/接口名（格式："服务名/文件名/接口名"，如 "TestService/file/test"）</param>
         /// <param name="params">请求参数（匿名对象/字典，自动转 JSON）</param>
         /// <param name="timeoutSec">超时时间（秒）</param>
-        /// <returns>服务端返回的 JSON 字符串（如 "{\"state\":true}"）</returns>
+        /// <returns>JSON 字符串（如 "{\"state\":true}"）</returns>
         public string Call(string pathtmStr, object param = null, double timeoutSec = 5.0)
         {
-            // 1. 解析 pathtmStr → 服务名 + 接口名（对应 Python 的 PathTM 解析）
-            if (!ParsePathtmStr(pathtmStr, out string serviceName, out string methodName))
-            {
-                return JsonConvert.SerializeObject(new { state = false, error_msg = "pathtmStr 格式错误（需为 '服务名/接口名'）" });
-            }
+            var parts = pathtmStr.Split(new[] { '/' }, 2);
+            var serviceName = parts[0].Trim();
+            var methodName = parts[1].Trim();
 
-            // 2. 全局初始化 eCAL（仅执行一次，对应 Python 的 ecal_core.initialize）
+            // 全局初始化 eCAL（仅执行一次）
             InitEcalOnce();
 
             try
             {
-                // 3. 获取/创建客户端（缓存复用，对应 Python 的 CLIENT_CACHE）
+                // 获取/创建客户端（缓存复用）
                 var (client, clientLock) = GetOrCreateClient(serviceName);
 
-                // 4. 参数序列化（对象 → JSON 字符串 → 字节数组，对应 Python 的 setattr(c.param, k, v)）
+                // 参数序列化（对象 → JSON 字符串 → 字节数组）
                 string requestJson = param == null ? "{}" : JsonConvert.SerializeObject(param);
                 byte[] requestBytes = Encoding.UTF8.GetBytes(requestJson);
 
-                // 5. 线程安全调用接口（对应 Python 的 client.lock）
+                // 线程安全调用接口
                 using (new ReaderWriterLockSlimWrapper(clientLock, LockType.Read))
                 {
                     // 等待客户端连接
@@ -54,7 +52,7 @@ namespace commissioning_studio.Ecal
                         return JsonConvert.SerializeObject(new { state = false, error_msg = $"连接服务 {serviceName} 超时" });
                     }
 
-                    // 调用接口（官方 CallWithResponse，对应 Python 的 c.call）
+                    // 调用ecal接口
                     List<ServiceResponse> responses = client.CallWithResponse(
                         methodName: methodName,
                         request: requestBytes,
@@ -81,27 +79,9 @@ namespace commissioning_studio.Ecal
         }
 
         /// <summary>
-        /// 解析 pathtmStr 为 服务名 + 接口名（复刻 Python 的 PathTM 逻辑）
-        /// </summary>
-        private bool ParsePathtmStr(string pathtmStr, out string serviceName, out string methodName)
-        {
-            serviceName = null;
-            methodName = null;
-
-            if (string.IsNullOrEmpty(pathtmStr) || !pathtmStr.Contains("/"))
-                return false;
-
-            var parts = pathtmStr.Split(new[] { '/' }, 2);
-            serviceName = parts[0].Trim();
-            methodName = parts[1].Trim();
-
-            return !string.IsNullOrEmpty(serviceName) && !string.IsNullOrEmpty(methodName);
-        }
-
-        /// <summary>
         /// 全局初始化 eCAL（仅执行一次，线程安全）
         /// </summary>
-        private void InitEcalOnce()
+        public static void InitEcalOnce()
         {
             if (_ecalInited) return;
 
@@ -121,18 +101,14 @@ namespace commissioning_studio.Ecal
         /// <summary>
         /// 获取或创建 eCAL 客户端（缓存复用，线程安全）
         /// </summary>
-        private (ServiceClient Client, ReaderWriterLockSlim Lock) GetOrCreateClient(string serviceName)
+        public static (ServiceClient Client, ReaderWriterLockSlim Lock) GetOrCreateClient(string serviceName)
         {
             return _clientCache.GetOrAdd(serviceName, key =>
             {
-                // 对应 Python 的 CLIENT_CACHE[pathtm.path] = ecal_service.Client(pathtm.path)
                 ServiceMethodInformationList methodList = new ServiceMethodInformationList();
                 methodList.Methods.Add(new ServiceMethodInformation("", new DataTypeInformation(), new DataTypeInformation()));
                 ServiceClient client = new ServiceClient(key, methodList);
-
-                // 对应 Python 的 client.lock = threading.Lock()
                 var clientLock = new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion);
-
                 Console.WriteLine($"创建 eCAL 客户端（服务名：{key}）");
                 return (client, clientLock);
             });

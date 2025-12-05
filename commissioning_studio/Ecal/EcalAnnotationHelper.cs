@@ -1,124 +1,33 @@
-using System;
-using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace commissioning_studio.Ecal
 {
     public static class EcalAnnotationHelper
-    {
-        const string DefaultServiceName = "modular";
+    {   
+        // ecalæœåŠ¡å™¨åç§°
+        const string DefaultServiceName = "modulars";
         static readonly EcalCaller _caller = new EcalCaller();
 
         /// <summary>
-        /// µ÷ÓÃ eCAL API ²¢·µ»Ø EcalResponse<T>
-        /// Ö§³Ö´¦Àí·şÎñ¶Ë·µ»ØË«ÖØ JSON ±àÂë£¨ÀıÈç data ×Ö¶ÎÎª JSON ×Ö·û´®£©µÄÇé¿ö
+        /// è°ƒç”¨ eCAL API å¹¶è¿”å› EcalResponse<T> ç±»å‹çš„ç»“æœ
+        /// æ”¯æŒå¼‚æ­¥è°ƒç”¨ï¼Œè¶…æ—¶æ—¶é—´é»˜è®¤ 5 ç§’
+        /// è‹¥ data å­—æ®µä¸º JSON å­—ç¬¦ä¸²ï¼Œä¼šè‡ªåŠ¨è§£æä¸º T ç±»å‹
         /// </summary>
         public static EcalResponse<T>? CallApi<T>(string pathtmStr, object param = null, double timeoutSec = 5.0)
         {
-            if (string.IsNullOrWhiteSpace(pathtmStr))
-                throw new ArgumentException("pathtmStr ²»ÄÜÎª¿Õ", nameof(pathtmStr));
 
-            var slashCount = pathtmStr.Count(c => c == '/');
-            string normalized;
-            if (slashCount >= 2)
-            {
-                normalized = pathtmStr;
-            }
-            else
-            {
-                normalized = $"{DefaultServiceName}/{pathtmStr}";
-            }
-
+            string normalized = $"{DefaultServiceName}/{pathtmStr}";
+            // è°ƒç”¨ eCAL API å¹¶è·å– JSON å­—ç¬¦ä¸²ç»“æœ
             var json = _caller.Call(normalized, param, timeoutSec);
-
-            if (string.IsNullOrWhiteSpace(json))
-                return null;
-
-            // ´¦Àí¿ÉÄÜµÄË«ÖØ±àÂë£ºÍâ²ãÎª×Ö·û´®µÄÇé¿ö£¨ÀıÈç "\"{...}\""£©
-            string rawJson = json.Trim();
-            if ((rawJson.StartsWith("\"") && rawJson.EndsWith("\"")) || (rawJson.StartsWith("'") && rawJson.EndsWith("'")))
-            {
-                try
-                {
-                    rawJson = JsonConvert.DeserializeObject<string>(rawJson) ?? rawJson;
-                }
-                catch
-                {
-                    // ÈçÎŞ·¨·´ĞòÁĞ»¯³É string£¬±£³ÖÔ­Ñù
-                }
-            }
-
-            // ÓÅÏÈ³¢ÊÔ°Ñ·µ»ØÖµ½âÎö³É EcalResponse<T>
+            // è§£æ JSON å­—ç¬¦ä¸²ä¸º EcalResponse<T> ç±»å‹
             try
             {
-                var apiResp = JsonConvert.DeserializeObject<EcalResponse<T>>(rawJson);
-                if (apiResp != null)
-                {
-                    // Èç¹û½âÎö³öÍâ²ã EcalResponse ÇÒ data Îª null£¬µ«Ô­Ê¼ JSON µÄ data ×Ö¶ÎÊÇÒ»¸ö JSON ×Ö·û´®»ò¶ÔÏó£¬
-                    // Ôò½øÒ»²½³¢ÊÔ½âÎöÄÚ²¿ JSON£¨¼æÈİ·şÎñ¶Ë°Ñ data ×÷Îª×Ö·û´®·µ»ØµÄÇé¿ö£©
-                    if (apiResp.data == null)
-                    {
-                        try
-                        {
-                            var root = JObject.Parse(rawJson);
-                            var dataToken = root["data"];
-                            if (dataToken != null)
-                            {
-                                if (dataToken.Type == JTokenType.String)
-                                {
-                                    var inner = dataToken.Value<string>();
-                                    if (!string.IsNullOrWhiteSpace(inner))
-                                    {
-                                        // inner ¿ÉÄÜÊÇ EcalResponse<T> »òÖ±½ÓÊÇ T
-                                        try
-                                        {
-                                            var innerApi = JsonConvert.DeserializeObject<EcalResponse<T>>(inner);
-                                            if (innerApi != null)
-                                                return innerApi;
-                                        }
-                                        catch { /* ignore */ }
-
-                                        try
-                                        {
-                                            var innerData = JsonConvert.DeserializeObject<T>(inner);
-                                            return new EcalResponse<T> { state = apiResp.state, data = innerData };
-                                        }
-                                        catch { /* ignore */ }
-                                    }
-                                }
-                                else if (dataToken.Type == JTokenType.Object || dataToken.Type == JTokenType.Array)
-                                {
-                                    try
-                                    {
-                                        var innerData = dataToken.ToObject<T>();
-                                        apiResp.data = innerData;
-                                        return apiResp;
-                                    }
-                                    catch { /* ignore */ }
-                                }
-                            }
-                        }
-                        catch { /* ignore parsing root */ }
-                    }
-
-                    return apiResp;
-                }
+                return JsonConvert.DeserializeObject<EcalResponse<T>>(json.Trim());
             }
             catch
             {
-                // ºöÂÔ£¬ºóĞø³¢ÊÔ½âÎöÎª T
-            }
-
-            // Èç¹û²»ÊÇ±ê×¼µÄ EcalResponse<T>£¬³¢ÊÔÖ±½Ó½âÎöÎª T£¨Ô­ÏÈÂß¼­µÄÒ»²¿·Ö£©
-            try
-            {
-                var data = JsonConvert.DeserializeObject<T>(rawJson);
-                return new EcalResponse<T> { state = true, data = data };
-            }
-            catch
-            {
-                // ½âÎöÊ§°Ü£¬·µ»Ø°üº¬Ô­Ê¼ÏìÓ¦µÄ´íÎóĞÅÏ¢
+                // è§£æå¤±è´¥ï¼Œè¿”å›åŸå§‹ JSON å­—ç¬¦ä¸²ä½œä¸ºé”™è¯¯ä¿¡æ¯
                 return new EcalResponse<T> { state = false, error_msg = json };
             }
         }
