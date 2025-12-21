@@ -1,11 +1,9 @@
 ﻿@inherits LayoutComponentBase
+@using commissioning_studio.Components.DBGU
 
-<div class="flex w-full h-full">
-    <div class="">
-        <NavMenu />
-    </div>
-
-    <main class="flex-1 p-2 overflow-auto">
+<div class="flex h-full w-full">
+    <NavMenu />
+    <main class="flex-1 overflow-auto p-2">
         @Body
     </main>
 </div>

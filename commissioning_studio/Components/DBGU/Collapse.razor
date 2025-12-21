@@ -1,0 +1,38 @@
+﻿<div class="mb-2 border-b border-gray-200">
+    <!-- 折叠面板标题栏（点击切换展开/折叠） -->
+    <div @onclick="ToggleCollapse"
+         class="flex cursor-pointer items-center justify-between bg-gray-50 p-2 hover:bg-gray-100">
+        <span>@Title</span>
+        <!-- 展开/折叠图标 -->
+        <div class="">
+
+        </div>
+    </div>
+
+    <!-- 折叠面板内容（根据状态显示/隐藏） -->
+    @if (IsExpanded)
+    {
+        <div class="border-l-2 border-gray-200 p-2 pl-4">
+            @ChildContent
+        </div>
+    }
+</div>
+
+@code {
+    // 折叠面板标题（外部传入）
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    // 折叠面板内容（外部传入的任意组件/内容）
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    // 控制展开/折叠状态
+    private bool IsExpanded { get; set; } = false;
+
+    // 切换折叠/展开状态
+    private void ToggleCollapse()
+    {
+        IsExpanded = !IsExpanded;
+    }
+}

@@ -1,3 +1,59 @@
-<div class="flex flex-col">
+@using System.ComponentModel.DataAnnotations;
 
+<div class="flex flex-col">
+    <div class="flex gap-3">
+        <div class="" @onclick="AddService">
+            <Icon Type="plus" Theme="IconThemeType.Outline" />
+        </div>
+        
+        <Icon Type="close" Theme="IconThemeType.Outline" />
+        <Icon Type="check" Theme="IconThemeType.Outline" />
+    </div>
+    <div>
+
+    </div>
 </div>
+
+<Modal Title="添加服务节点" @bind-Visible="@_visible">
+    <div class="flex flex-col gap-3">
+        <RadioGroup @bind-Value="@Composition">
+            <Radio Value=false>单轴</Radio>
+            <Radio Value=true>轴组</Radio>
+        </RadioGroup>
+        <Form Model="@axis">
+            <FormItem Label="选择电机协议">
+                <Input @bind-Value="@context.protocol" />
+            </FormItem>
+        </Form>
+    </div>
+</Modal>
+
+@code{
+    bool _visible = false;
+
+    bool Composition = false;
+
+    public class Axis
+    {
+        [Required]
+        public string protocol;
+
+
+
+
+
+
+    }
+
+    public class AxisGroup
+    {
+        
+    }
+    Axis axis = new();
+    AxisGroup axisGroup = new();
+
+    private void AddService()
+    {
+        _visible = !_visible;
+    }
+}
