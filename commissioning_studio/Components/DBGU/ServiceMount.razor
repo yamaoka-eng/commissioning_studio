@@ -16,29 +16,78 @@
 
 <Modal Title="添加服务节点" @bind-Visible="@_visible">
     <div class="flex flex-col gap-3">
-        <RadioGroup @bind-Value="@Composition">
-            <Radio Value=false>单轴</Radio>
-            <Radio Value=true>轴组</Radio>
+        <RadioGroup @bind-Value="@type">
+            <Radio Value="@("单轴")">单轴</Radio>
+            <Radio Value="@("轴组")">轴组</Radio>
+            <Radio Value="@("夹爪")">夹爪</Radio>
         </RadioGroup>
-        <Form Model="@axis">
-            <FormItem Label="选择电机协议">
-                <Input @bind-Value="@context.protocol" />
-            </FormItem>
-        </Form>
+        @if (type == "单轴")
+        {
+            <Form Model="@axis">
+                <FormItem Label="选择电机协议">
+                    <SimpleSelect DefaultValue="DSP402" Style="width:120px;">
+                        <SelectOptions>
+                            <SimpleSelectOption Value="DSP402" Label="DSP402"></SimpleSelectOption>
+                            <SimpleSelectOption Value="RS485" Label="RS485"></SimpleSelectOption>
+                        </SelectOptions>
+                    </SimpleSelect>
+                </FormItem>
+                <FormItem Label="服务路径">
+                    <Input @bind-Value="@context.protocol" />
+                </FormItem>
+            </Form>
+        }
+        else if (type == "轴组")
+        {
+            <Form Model="@axisGroup">
+                <FormItem Label="选择电机协议">
+                    <SimpleSelect DefaultValue="DSP402" Style="width:120px;">
+                        <SelectOptions>
+                            <SimpleSelectOption Value="DSP402" Label="DSP402"></SimpleSelectOption>
+                            <SimpleSelectOption Value="RS485" Label="RS485"></SimpleSelectOption>
+                        </SelectOptions>
+                    </SimpleSelect>
+                </FormItem>
+            </Form>
+        }
+        else if (type == "夹爪")
+        {
+            <Form Model="@axisGroup">
+                <FormItem Label="选择电机协议">
+                    <SimpleSelect DefaultValue="DSP402" Style="width:120px;">
+                        <SelectOptions>
+                            <SimpleSelectOption Value="DSP402" Label="DSP402"></SimpleSelectOption>
+                            <SimpleSelectOption Value="RS485" Label="RS485"></SimpleSelectOption>
+                        </SelectOptions>
+                    </SimpleSelect>
+                </FormItem>
+            </Form>
+        }
     </div>
 </Modal>
 
 @code{
     bool _visible = false;
 
-    bool Composition = false;
+    string type = "单轴";
 
     public class Axis
     {
         [Required]
         public string protocol;
 
+        [Required]
+        public int canChannel;
 
+        [Required]
+        public int 
+
+        [Required]
+        public string deviceName;
+
+
+        [Required]
+        public string servicePath;
 
 
 
@@ -47,8 +96,28 @@
 
     public class AxisGroup
     {
-        
+        [Required]
+        public string protocol;
+
+        [Required]
+        public string servicePath;
+
+        [Required]
+        public int CompositeNumber = 1;
     }
+
+    public class Grapper
+    {
+        [Required]
+        public string protocol;
+
+        [Required]
+        public int comPort;
+
+        [Required]
+        public string servicePath;
+    }
+
     Axis axis = new();
     AxisGroup axisGroup = new();
 
