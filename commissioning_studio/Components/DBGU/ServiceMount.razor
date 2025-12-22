@@ -32,6 +32,17 @@
                         </SelectOptions>
                     </SimpleSelect>
                 </FormItem>
+                <FormItem Label="CAN通道">
+                    <Input @bind-Value="@context.protocol" />
+                </FormItem>
+                <FormItem Label="选择canopen通讯方式">
+                    <SimpleSelect DefaultValue="DSP402" Style="width:120px;">
+                        <SelectOptions>
+                            <SimpleSelectOption Value="DSP402" Label="DSP402"></SimpleSelectOption>
+                            <SimpleSelectOption Value="RS485" Label="RS485"></SimpleSelectOption>
+                        </SelectOptions>
+                    </SimpleSelect>
+                </FormItem>
                 <FormItem Label="服务路径">
                     <Input @bind-Value="@context.protocol" />
                 </FormItem>
@@ -80,16 +91,18 @@
         public int canChannel;
 
         [Required]
-        public int 
+        public int id;
+
+        [Required]
+        public string canopenMode;
 
         [Required]
         public string deviceName;
 
-
         [Required]
         public string servicePath;
 
-
+        
 
 
     }
