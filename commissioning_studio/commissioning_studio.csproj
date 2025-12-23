@@ -12,6 +12,13 @@
   </Target>
 
   <ItemGroup>
+    <Compile Remove="Devices\**" />
+    <Content Remove="Devices\**" />
+    <EmbeddedResource Remove="Devices\**" />
+    <None Remove="Devices\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AntDesign" Version="1.5.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
@@ -23,7 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Devices\" />
+    <Folder Include="DevicesConfig\" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,7 @@
-@using System.ComponentModel.DataAnnotations;
+﻿@using System.ComponentModel.DataAnnotations;
+@using System.Text.Json;
+@using System.Text.RegularExpressions;
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
 
 <div class="flex flex-col">
     <div class="flex gap-3">
@@ -14,60 +17,113 @@
     </div>
 </div>
 
-<Modal Title="���ӷ���ڵ�" @bind-Visible="@_visible">
+<Modal Title="添加服务节点" MaskClosable="false" Visible="@_visible" OnOk="@HandleOk" OnCancel="@HandleCancel" ConfirmLoading="@_confirmLoading">
     <div class="flex flex-col gap-3">
-        <RadioGroup @bind-Value="@type">
-            <Radio Value="@("����")">����</Radio>
-            <Radio Value="@("����")">����</Radio>
-            <Radio Value="@("��צ")">��צ</Radio>
-        </RadioGroup>
-        @if (type == "����")
+        <div class="flex items-center justify-center gap-3">
+            <div class="">
+                类型：
+            </div>
+            <RadioGroup @bind-Value="type">
+                <Radio Value="@("单轴")">单轴</Radio>
+                <Radio Value="@("轴组")">轴组</Radio>
+                <Radio Value="@("夹爪")">夹爪</Radio>
+            </RadioGroup>
+        </div>
+        @if (type == "单轴")
         {
             <Form Model="@axis">
-                <FormItem Label="ѡ����Э��">
-                    <SimpleSelect DefaultValue="DSP402" Style="width:120px;">
+                <FormItem Label="选择通信协议">
+                    <SimpleSelect Class="w-[120px]" DefaultValue="CAN-DSP402" @bind-Value="@context.protocol">
                         <SelectOptions>
-                            <SimpleSelectOption Value="DSP402" Label="DSP402"></SimpleSelectOption>
-                            <SimpleSelectOption Value="RS485" Label="RS485"></SimpleSelectOption>
+                            <SimpleSelectOption Value="CAN-DSP402" Label="CAN-DSP402"></SimpleSelectOption>
+                            <SimpleSelectOption Value="MODBUS-RS485" Label="MODBUS-RS485"></SimpleSelectOption>
                         </SelectOptions>
                     </SimpleSelect>
                 </FormItem>
-                <FormItem Label="CANͨ��">
-                    <Input @bind-Value="@context.protocol" />
-                </FormItem>
-                <FormItem Label="ѡ��canopenͨѶ��ʽ">
-                    <SimpleSelect DefaultValue="DSP402" Style="width:120px;">
+                <FormItem Label="选择通讯方式">
+                    <SimpleSelect Class="w-[120px]" DefaultValue="local" @bind-Value="@context.communicationMode">
                         <SelectOptions>
-                            <SimpleSelectOption Value="DSP402" Label="DSP402"></SimpleSelectOption>
-                            <SimpleSelectOption Value="RS485" Label="RS485"></SimpleSelectOption>
+                            <SimpleSelectOption Value="local" Label="local"></SimpleSelectOption>
+                            <SimpleSelectOption Value="TCP" Label="TCP"></SimpleSelectOption>
                         </SelectOptions>
                     </SimpleSelect>
                 </FormItem>
-                <FormItem Label="����·��">
-                    <Input @bind-Value="@context.protocol" />
+                @if (context.protocol == "CAN-DSP402")
+                {
+                    @if (context.communicationMode == "local")
+                    {
+                        <FormItem Label="CAN通信模式">
+                            <SimpleSelect Class="w-[120px]" DefaultValue="PDO" @bind-Value="@context.communicationMode">
+                                <SelectOptions>
+                                    <SimpleSelectOption Value="PDO" Label="PDO"></SimpleSelectOption>
+                                    <SimpleSelectOption Value="SDO" Label="SDO"></SimpleSelectOption>
+                                </SelectOptions>
+                            </SimpleSelect>
+                        </FormItem>
+                        <FormItem Label="CAN通道">
+                            <Input @bind-Value="@context.canChannel" />
+                        </FormItem>
+                        <FormItem Label="CANID">
+                            <Input @bind-Value="@context.id" />
+                        </FormItem>
+                        <FormItem Label="波特率">
+                            <Input @bind-Value="@context.baud" />
+                        </FormItem>
+                    }
+                    else
+                    {
+                        <FormItem Label="IP地址">
+                            <Input @bind-Value="@context.ip" />
+                        </FormItem>
+                    }
+                }else if (context.protocol == "MODBUS-RS485")
+                {
+                    @if (context.communicationMode == "local")
+                    {
+                        <FormItem Label="端口号">
+                            <Input @bind-Value="@context.comPort" />
+                        </FormItem>
+                        <FormItem Label="ID">
+                            <Input @bind-Value="@context.id" />
+                        </FormItem>
+                        <FormItem Label="波特率">
+                            <Input @bind-Value="@context.baud" />
+                        </FormItem>
+                    }
+                    else
+                    {
+                        <FormItem Label="IP地址">
+                            <Input @bind-Value="@context.ip" />
+                        </FormItem>
+                    }
+                }
+                <FormItem Label="设备名称">
+                    <Input @bind-Value="@context.deviceName" />
+                </FormItem>
+                <FormItem Label="服务路径">
+                    <Input @bind-Value="@context.servicePath" />
                 </FormItem>
             </Form>
         }
-        else if (type == "����")
+        else if (type == "轴组")
         {
             <Form Model="@axisGroup">
-                <FormItem Label="ѡ����Э��">
-                    <SimpleSelect DefaultValue="DSP402" Style="width:120px;">
+                <FormItem Label="轴数量">
+                    <SimpleSelect Class="w-[120px]" DefaultValue="2" @bind-Value="@context.communicationString">
                         <SelectOptions>
-                            <SimpleSelectOption Value="DSP402" Label="DSP402"></SimpleSelectOption>
-                            <SimpleSelectOption Value="RS485" Label="RS485"></SimpleSelectOption>
+                            <SimpleSelectOption Value="2" Label="2"></SimpleSelectOption>
+                            <SimpleSelectOption Value="3" Label="3"></SimpleSelectOption>
                         </SelectOptions>
                     </SimpleSelect>
                 </FormItem>
             </Form>
         }
-        else if (type == "��צ")
+        else if (type == "夹爪")
         {
-            <Form Model="@axisGroup">
-                <FormItem Label="ѡ����Э��">
-                    <SimpleSelect DefaultValue="DSP402" Style="width:120px;">
+            <Form Model="@grapper">
+                <FormItem Label="选择通信协议">
+                    <SimpleSelect DefaultValue="RS485" Style="width:120px;" @bind-Value="@context.protocol">
                         <SelectOptions>
-                            <SimpleSelectOption Value="DSP402" Label="DSP402"></SimpleSelectOption>
                             <SimpleSelectOption Value="RS485" Label="RS485"></SimpleSelectOption>
                         </SelectOptions>
                     </SimpleSelect>
@@ -80,67 +136,178 @@
 @code{
     bool _visible = false;
 
-    string type = "����";
+    string type { get; set; } = "单轴";
+
+    bool _confirmLoading = false;
 
     public class Axis
     {
         [Required]
-        public string protocol;
+        public string protocol { get; set; }
 
         [Required]
-        public int canChannel;
+        public string communicationMode { get; set; }
 
         [Required]
-        public int id;
+        public int canChannel { get; set; }
 
         [Required]
-        public int baud;
+        public int id { get; set; }
 
         [Required]
-        public string ip;
+        public int baud { get; set; }
 
         [Required]
-        public string canopenMode;
+        public string ip { get; set; }
 
         [Required]
-        public string comPort;
+        public string canopenMode { get; set; } = "pdo";
 
         [Required]
-        public string deviceName;
+        public string comPort { get; set; }
 
         [Required]
-        public string servicePath;
+        public string deviceName { get; set; }
+
+        [Required]
+        public string servicePath { get; set; }
     }
 
     public class AxisGroup
     {
         [Required]
-        public string protocol;
+        public int communicationNumber { get; set; } = 2;
+
+        public string communicationString
+        {
+            get
+            {
+                return communicationNumber.ToString();
+            }
+            set
+            {
+                if (!string.IsNullOrWhiteSpace(value)
+                    && int.TryParse(value, out int number)
+                    && (number == 2 || number == 3))
+                {
+                    communicationNumber = number;
+                }
+            }
+        }
 
         [Required]
-        public string servicePath;
+        public string deviceName { get; set; }
 
         [Required]
-        public int CompositeNumber = 1;
+        public List<Axis> axis { get; set; } = [];
     }
 
     public class Grapper
     {
         [Required]
-        public string protocol;
+        public string protocol { get; set; }
 
         [Required]
-        public int comPort;
+        public int comPort { get; set; }
 
         [Required]
-        public string servicePath;
+        public string servicePath { get; set; }
+
+        [Required]
+        public string deviceName { get; set; }
     }
 
     Axis axis = new();
     AxisGroup axisGroup = new();
+    Grapper grapper = new();
 
     private void AddService()
     {
-        _visible = !_visible;
+        _visible = true;
+    }
+
+    private void HandleCancel(MouseEventArgs e)
+    {
+        Axis axis = new();
+        AxisGroup axisGroup = new();
+        Grapper grapper = new();
+        _visible = false;
+    }
+
+    private async Task HandleOk(Microsoft.AspNetCore.Components.Web.MouseEventArgs e)
+    {
+        _confirmLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // 根据 type 选择要序列化的对象与文件名
+            object modelToSave = null;
+            string fileName = null;
+
+            if (type == "单轴")
+            {
+                modelToSave = axis;
+                fileName = axis?.deviceName;
+            }
+            else if (type == "轴组")
+            {
+                modelToSave = axisGroup;
+                fileName = axisGroup?.deviceName;
+            }
+            else if (type == "夹爪")
+            {
+                modelToSave = grapper;
+                fileName = grapper?.deviceName;
+            }
+
+            // 若 fileName 为空或无效，则使用备选名称
+            if (string.IsNullOrWhiteSpace(fileName))
+            {
+                fileName = $"{type}_{DateTime.Now:yyyyMMddHHmmss}";
+            }
+
+            await SaveModelToJsonFileAsync(modelToSave, fileName);
+        }
+        catch (Exception ex)
+        {
+            // 这里可以改为更合适的错误处理（日志、UI 提示等）
+            Console.Error.WriteLine(ex);
+        }
+        finally
+        {
+            // 重置状态与模型（注意这里赋值给字段，不要声明新的局部变量）
+            axis = new Axis();
+            axisGroup = new AxisGroup();
+            grapper = new Grapper();
+            _visible = false;
+            _confirmLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveModelToJsonFileAsync(object model, string desiredFileName)
+    {
+        if (model == null) throw new ArgumentNullException(nameof(model));
+        if (string.IsNullOrWhiteSpace(desiredFileName)) throw new ArgumentException("文件名不能为空", nameof(desiredFileName));
+
+        // 过滤文件名中的非法字符
+        var safeName = Regex.Replace(desiredFileName, @"[<>:""/\\|?*\u0000-\u001F]", "_");
+        if (string.IsNullOrWhiteSpace(safeName)) safeName = $"device_{DateTime.Now:yyyyMMddHHmmss}";
+
+        // 目录：项目根目录下的 devicesConfig
+        var dir = Path.Combine(Env.ContentRootPath ?? AppContext.BaseDirectory, "DevicesConfig");
+        Directory.CreateDirectory(dir);
+
+        var fullPath = Path.Combine(dir, safeName + ".json");
+
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
+        var json = JsonSerializer.Serialize(model, model.GetType(), options);
+        await File.WriteAllTextAsync(fullPath, json);
     }
 }

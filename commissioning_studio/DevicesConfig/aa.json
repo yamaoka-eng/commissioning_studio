@@ -1,0 +1,12 @@
+{
+  "protocol": "CAN-DSP402",
+  "communicationMode": "local",
+  "canChannel": 0,
+  "id": 0,
+  "baud": 0,
+  "ip": null,
+  "canopenMode": null,
+  "comPort": null,
+  "deviceName": "aa",
+  "servicePath": null
+}
