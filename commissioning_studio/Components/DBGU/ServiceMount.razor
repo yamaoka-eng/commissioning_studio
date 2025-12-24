@@ -33,17 +33,17 @@
         {
             <Form Model="@axis">
                 <FormItem Label="选择通信协议">
-                    <SimpleSelect Class="w-[120px]" DefaultValue="CAN-DSP402" @bind-Value="@context.protocol">
+                    <SimpleSelect Class="w-[120px]" DefaultValue="CAN-CIA402" @bind-Value="@context.protocol">
                         <SelectOptions>
-                            <SimpleSelectOption Value="CAN-DSP402" Label="CAN-DSP402"></SimpleSelectOption>
+                            <SimpleSelectOption Value="CAN-CIA402" Label="CAN-CIA402"></SimpleSelectOption>
                             <SimpleSelectOption Value="MODBUS-RS485" Label="MODBUS-RS485"></SimpleSelectOption>
                         </SelectOptions>
                     </SimpleSelect>
                 </FormItem>
                 <FormItem Label="选择通讯方式">
-                    <SimpleSelect Class="w-[120px]" DefaultValue="local" @bind-Value="@context.communicationMode">
+                    <SimpleSelect Class="w-[120px]" DefaultValue="Local" @bind-Value="@context.communicationMode">
                         <SelectOptions>
-                            <SimpleSelectOption Value="local" Label="local"></SimpleSelectOption>
+                            <SimpleSelectOption Value="Local" Label="Local"></SimpleSelectOption>
                             <SimpleSelectOption Value="TCP" Label="TCP"></SimpleSelectOption>
                         </SelectOptions>
                     </SimpleSelect>
@@ -78,7 +78,7 @@
                     }
                 }else if (context.protocol == "MODBUS-RS485")
                 {
-                    @if (context.communicationMode == "local")
+                    @if (context.communicationMode == "Local")
                     {
                         <FormItem Label="端口号">
                             <Input @bind-Value="@context.comPort" />
@@ -161,7 +161,7 @@
         public string ip { get; set; }
 
         [Required]
-        public string canopenMode { get; set; } = "pdo";
+        public string canopenMode { get; set; } = "PDO";
 
         [Required]
         public string comPort { get; set; }
